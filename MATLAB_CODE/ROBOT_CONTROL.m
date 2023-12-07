@@ -104,8 +104,8 @@ Kv = -K_ext(1, 5) ;
 %% ------------------------------------------------
 %% OPTIMAL CONTROL : LQ 
 
-Q = diag([0.1, 0.1, 0.1 , 0.1]);
-R = diag([1]);
+Q = 10*eye(4);
+R = 0.1*diag([1]);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
@@ -144,6 +144,40 @@ grid on
 xlabel('Time');
 ylabel('x2');
 title('Evolution of state 2 - LQ control');
+
+%% LQ with the system enlargment
+
+%now we want to enlarge the system in order toput the integrator 
+
+A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
+B_tilde = [Blin ; 0 ] ;
+
+%now let's design the LQ regulator 
+
+Q_lq = eye(5) ;
+R_lq = 10000*eye(1) ;
+
+% Before apply LQif control we need to ceck that 
+% 1. (A_tilde, B_tilde) is reachable 
+
+rank(ctrb(A_tilde, B_tilde))
+
+%2. (A_tilde, C_q) is observable 
+
+C_q = sqrt(Q_lq) ;
+
+rank(obsv(A_tilde, C_q))
+
+%so we verify the two conditions 
+
+[K_lqe, S, P] = lqr(A_tilde, B_tilde, Q_lq, R_lq) ;
+
+%now we can separate the matrix K_lq
+
+K_lqx = K_lqe(:,1:4) ;
+K_lqeta = K_lqe(:, 5) ;
+
+
 
 
 
