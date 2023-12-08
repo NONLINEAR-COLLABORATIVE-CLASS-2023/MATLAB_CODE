@@ -186,13 +186,11 @@ K_lqeta = K_lqe(:, 5) ;
 s = tf('s')
 kp = 1;
 G = 1/s^4;
-R = kp*(s+0.001)^3/(s/50+1)^4;
+R = kp*(s+0.001)^3;
 L = G*R
 bode(L), grid on;
-
 syms s
-R = kp*(s+0.001)^3/(s/50+1)^4;
-v = ilaplace(R)
+R = kp*(s+0.001)^3;
 
 
 
