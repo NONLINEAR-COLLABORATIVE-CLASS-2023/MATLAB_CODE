@@ -53,7 +53,7 @@ p_closeloop= eig(Alin-Blin*K);
 %% POLE PLACEMENT WITH INTEGRATORS
 
 A_ext= [Alin, zeros(4, 1);            %A extended matrix
-            -Clin, zeros(1)];
+       -Clin, zeros(1)];
 
 B_ext = [Blin; zeros(1)];               %B extended matrix
 
@@ -111,7 +111,6 @@ R = 0.1*diag(1);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
-
 % K_lq response
 
 A_lq = Alin-Blin*K ;
@@ -149,36 +148,27 @@ title('Evolution of state 2 - LQ control');
 
 %% LQ with the system enlargment
 
-%now we want to enlarge the system in order toput the integrator 
+%now we want to enlarge the system in order to add an integrator 
 
 A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
 B_tilde = [Blin ; 0 ] ;
 
-%now let's design the LQ regulator 
-
+%tunable matrixes 
 Q_lq = eye(5) ;
 R_lq = 10000*eye(1) ;
 
-% Before apply LQif control we need to ceck that 
-% 1. (A_tilde, B_tilde) is reachable 
-
-rank(ctrb(A_tilde, B_tilde))
-
-%2. (A_tilde, C_q) is observable 
-
+% check reachability and observability 
+rank(ctrb(A_tilde, B_tilde));
 C_q = sqrt(Q_lq) ;
+rank(obsv(A_tilde, C_q));
 
-rank(obsv(A_tilde, C_q))
-
-%so we verify the two conditions 
-
+% computation of the gain for l1
 [K_lqe, S, P] = lqr(A_tilde, B_tilde, Q_lq, R_lq) ;
-
-%now we can separate the matrix K_lq
 
 K_lqx = K_lqe(:,1:4) ;
 K_lqeta = K_lqe(:, 5) ;
 
+%% ----------------------------------------------------------------------------------------------
 %% FEEDBACK LINEARIZATION
 
 syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
@@ -200,6 +190,7 @@ y_dddd = diff(y_ddd,t);
 y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (Bl*((Bl*x1_dot)/Jl + (k*x2_dot)/Jl - (k*x4_dot)/Jl - (g*l*m*sin(x2(t))*x2_dot)/Jl))/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl; %% this code ha to be changed if sth changes in the system
 y_dddd = simplify(y_dddd);
 y_dddd = subs(y_dddd, Bl, 0);
+
 %3. Change of coordinates to bring equilibrium to [0, 0]
 syms dx1(t) dx2(t) dx3(t) dx4(t)
 dx1_dot = subs(x1_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
@@ -208,10 +199,9 @@ dx3_dot = subs(x3_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar,
 dx4_dot = subs(x4_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
 dy = subs(y(t), [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
 
-
 %4. diffeomorphism
 x1_tilde = dy;
-x2_tilde = diff(dy,t);
+x2_tilde = -dx1 ; %x2_tilde = diff(dy,t)
 x3_tilde = diff(dy,t,2);
 x4_tilde = diff(dy,t,3);
 
