@@ -107,7 +107,7 @@ Kv = -K_ext(1, 5) ;          %additional integrator gain
 
 % Tunable matrix intialization
 Q = 10*eye(4);
-R = 0.1*diag(1);
+R = 0.1*diag([1]);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
@@ -222,7 +222,7 @@ eqn2 = dx2_t == -dx1;
 eqn3 = dx3_t == k*(dx2+pi/4)/Jl+m*g*l*cos(dx2+pi/4)/Jl-k*(dx4+x4_bar)/Jl;
 eqn4 = dx4_t == k/Jl*dx1-m*g*l/Jl*sqrt(2)/2*(sin(dx2)+cos(dx2))*dx1-k/Jl*dx3;
 sys    = [eqn1, eqn2, eqn3, eqn4];
-[x1_t, x2_t, x3_t, x4_t]       = solve(sys,[dx1,dx2,dx3,dx4]);
+[x1_t, x2_t, x3_t, x4_t]       = solve(sys,[dx1,dx2,dx3,dx4])
 %6b. verify that the equilibrium is in [0,0,0,0]
 x1_t = subs(x1_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
 x2_t = subs(x2_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
