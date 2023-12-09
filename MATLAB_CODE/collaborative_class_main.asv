@@ -267,18 +267,8 @@ l = 0.3;
 g = 9.81;
 
 
-%% FEEDBACK GAIN TUNING Kv_lin
-
-A_tilde = [0 1 0 0;
-                0,0,1,0;
-                0,0,0,1;
-                0,0,0,0];
-B_tilde = [0,0,0,1]';
-
-p_tilde = [-10, -10.1, -10.2, -10.3]; % poles choosen for pole placement
-Kv_tilde = place(A_tilde, B_tilde, p_tilde);
-p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
-
+%% FEEDBACK GAIN TUNING
+Kv_lin = ones(1,4);
 
 
 %% REGULATOR
