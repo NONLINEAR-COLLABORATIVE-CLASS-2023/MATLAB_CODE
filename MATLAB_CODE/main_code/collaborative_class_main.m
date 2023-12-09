@@ -2,6 +2,10 @@ clear all;
 clc;
 close all;
 %% COLLABORATIVE CLASS
+%   Matteo Mastromauro
+%   Kevin Ortega
+%   Alexandra Spertini
+%   Alex Zagati
 
 %% PARAMETERS
 
@@ -13,9 +17,10 @@ Bl = 0;
 m = 0.3;
 l = 0.3;
 g = 9.81;
-const = sqrt(2)*m*g*l/(2*Jl);
-%% EQUILIBRIUM
+const = sqrt(2)*m*g*l/(2*Jl); %% needed for simulink simulation
 
+
+%% EQUILIBRIUM
 x1_bar = 0;
 x2_bar = pi/4;
 x3_bar = 0;
@@ -76,9 +81,10 @@ for j= 1:1:length(t)
     u(j,:)= -K*y(j,:)';
 end
 
-figure(1)
-plot(t, u);
-grid on
+% uncomment to plot
+% figure(1)
+% plot(t, u);
+% grid on
 
 
 %% PID 
@@ -90,11 +96,9 @@ kp=10;
 R2= kp*G^(-1)/(s*(s/500+1)^4); 
 L2=G*R2;
 
-%[N2, D2]= tfdata(R2);
-
-figure
-%bode(L); grid on; title('L');
-bode(L2); grid on; title('L2');
+% uncomment to plot
+% figure()
+% bode(L2); grid on; title('L2');
 
 %% RESPONSE WITH K_ext
 
@@ -107,9 +111,10 @@ for j= 1:1:length(t)
     u_ext(j,:)= -K_ext*y_ext(j,:)';
 end
 
-figure(2)
-plot(t, u_ext);
-grid on
+% uncomment to plot
+% figure(2)
+% plot(t, u_ext);
+% grid on
 
 %% SIMULINK MODEL INITILIZATION
 
@@ -148,19 +153,21 @@ tspan2 = [0 5] ;
 y02 = ones(4,1);
 [t2,y2] = ode45(dxdt2, tspan2, y02) ;
 
-figure(3)
-plot(t1, y1(:, 2)) ;
-grid on
-xlabel('Time');
-ylabel('x2 - linearised system');
-title('Evolution of state 2 - pole placement with integrators');
 
-figure(4)
-plot(t2, y2(:, 2),'c');
-grid on
-xlabel('Time');
-ylabel('x2');
-title('Evolution of state 2 - LQ control');
+% uncomment to plot
+% figure(3)
+% plot(t1, y1(:, 2)) ;
+% grid on
+% xlabel('Time');
+% ylabel('x2 - linearised system');
+% title('Evolution of state 2 - pole placement with integrators');
+% 
+% figure(4)
+% plot(t2, y2(:, 2),'c');
+% grid on
+% xlabel('Time');
+% ylabel('x2');
+% title('Evolution of state 2 - LQ control');
 
 %% LQ with the system enlargment
 
@@ -187,25 +194,49 @@ K_lqeta = K_lqe(:, 5) ;
 %% ----------------------------------------------------------------------------------------------
 %% FEEDBACK LINEARIZATION
 
+%% NONLINEAR SYSTEM
+
+%0. Nonlinear system + eq. computation
 syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
 syms  Bm Jl Jm m g l k %system parameters, comment if you want the numerical expression
-Bl = 0 ; 
-% 1. system definition
+
 x1_dot = -Bl/Jl*x1(t)-k/Jl*x2(t)-m*g*l/Jl*cos(x2(t))+k/Jl*x4(t);
 x2_dot = x1(t);
-x3_dot = k/Jm*x2(t)-Bm/Jm*x3(t)-k/Jm*x4(t)+u/Jm;
+x3_dot = k/Jm*x2(t)-Bm/Jm*x3(t)-k/Jm*x4(t)+u(t)/Jm;
+x4_dot = x3(t);
+
+x1_dot = subs(x1_dot,x2(t),pi/4);
+x2_dot = subs(x2_dot,x2(t),pi/4);
+x3_dot = subs(x3_dot,x2(t),pi/4);
+x4_dot = subs(x4_dot,x2(t),pi/4);
+
+
+eqn1 = 0 == x1_dot;
+eqn2 = 0 == x2_dot;
+eqn3 = 0 == x3_dot;
+eqn4 = 0 == x4_dot;
+
+[x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)]);
+ 
+% 1. system definition
+syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
+syms  Bm Jl Jm m g l k %system parameters, comment if you want the numerical expression
+x1_dot = -Bl/Jl*x1(t)-k/Jl*x2(t)-m*g*l/Jl*cos(x2(t))+k/Jl*x4(t);
+x2_dot = x1(t);
+x3_dot = k/Jm*x2(t)-Bm/Jm*x3(t)-k/Jm*x4(t)+u(t)/Jm;
 x4_dot = x3(t);
 y(t) = pi/4-x2(t);
 
 %2. checking the relative degree of the system
 y_d = -x2_dot;
 y_dd = -x1_dot;
-%y_ddd = diff(-x1_dot,t)
-y_ddd  = (Bl*x1_dot)/Jl + (k*x2_dot)/Jl - (k*x4_dot)/Jl - (g*l*m*sin(x2(t))*x2_dot)/Jl; %% this code ha to be changed if sth changes in the system
-y_dddd = diff(y_ddd,t)
-y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (Bl*((Bl*x1_dot)/Jl + (k*x2_dot)/Jl - (k*x4_dot)/Jl - (g*l*m*sin(x2(t))*x2_dot)/Jl))/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl; %% this code ha to be changed if sth changes in the system
-y_dddd = simplify(y_dddd);
-y_dddd = subs(y_dddd, Bl, 0);
+y_ddd = diff(y_dd,t);
+y_ddd  = (k*x2_dot)/Jl - (k*x4_dot)/Jl - (g*l*m*sin(x2(t))*x2_dot)/Jl;
+y_dddd = diff(y_ddd,t);
+
+%substituting diff(x,t) in order to include it in the simulink scheme
+
+y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl;
 
 %3. Change of coordinates to bring equilibrium to [0, 0]
 syms dx1(t) dx2(t) dx3(t) dx4(t)
@@ -216,12 +247,12 @@ dx4_dot = subs(x4_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar,
 dy = subs(y(t), [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
 
 %4. diffeomorphism
-x1_tilde = dy
-x2_tilde = -dx1 %x2_tilde = diff(dy,t)
+x1_tilde = dy;
+x2_tilde = -dx1; %x2_tilde = diff(dy,t)
 %x3_tilde = diff(x2_tilde,t)
-x3_tilde = -dx1_dot
+x3_tilde = -dx1_dot;
 %x4_tilde = diff(x3_tilde,t) ;
-x4_tilde = (k*dx2_dot)/Jl - (k*dx4_dot)/Jl - (g*l*m*sin(pi/4 + dx2(t))*dx2_dot)/Jl
+x4_tilde = (k*dx2_dot)/Jl - (k*dx4_dot)/Jl - (g*l*m*sin(pi/4 + dx2(t))*dx2_dot)/Jl;
 
 %6. inverse relationship phi(^-1)
 syms dx1 dx2 dx3 dx4 dx1_t dx2_t dx3_t dx4_t
@@ -245,15 +276,14 @@ x2_t_dot = x3_t;
 x3_t_dot = x4_t;
 x4_t_dot = y_dddd;
 
+y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl;
+v = y_dddd;
 
-v = simplify(y_dddd,'steps',10)
-
-syms x1 x2 x3 x4 u
-v = (g*l*m*sin(x2)*(k*x2 - k*x4 + g*l*m*cos(x2)))/Jl^2 - (k*(u - Bm*x3 + k*x2 - k*x4))/(Jl*Jm) - (k*(k*x2 - k*x4 + g*l*m*cos(x2)))/Jl^2 - (g*l*m*cos(x2)*x1^2)/Jl
-
-u = finverse(v,u)
  %8. Finding u
-
+syms x1 x2 x3 x4 u v_sim k Bm Jm Jl g l m 
+v = (g*l*m*sin(x2)*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (k*(u/Jm - (Bm*x3)/Jm + (k*x2)/Jm - (k*x4)/Jm))/Jl - (k*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (g*l*m*cos(x2)*x1^2)/Jl;
+eqn = v_sim == v;
+U = solve(eqn, u)
 
  %% PARAMETERS FOR SIMULINK SIMULATION
 
@@ -265,6 +295,12 @@ Bl = 0;
 m = 0.3;
 l = 0.3;
 g = 9.81;
+x1_bar = 0;
+x2_bar = pi/4;
+x3_bar = 0;
+x4_bar = m*g*l*cos(x2_bar)/k + x2_bar;
+u_bar= m*g*l*cos(x2_bar);
+x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
 
 
 %% FEEDBACK GAIN TUNING Kv_lin
@@ -287,7 +323,7 @@ kp = 1;
 G = 1/s^4;
 R = kp*(s+0.001)^3/(s/50+1)^4;
 L = G*R;
-bode(L), grid on;
+%bode(L), grid on;
 
 syms s
 R = kp*(s+0.001)^3/(s/50+1)^4;
