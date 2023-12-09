@@ -213,17 +213,20 @@ eqn3 = dx3_t == k*(dx2+pi/4)/Jl+m*g*l*cos(dx2+pi/4)/Jl-k*(dx4+x4_bar)/Jl;
 eqn4 = dx4_t == k/Jl*dx1-m*g*l/Jl*sqrt(2)/2*(sin(dx2)+cos(dx2))*dx1-k/Jl*dx3;
 sys    = [eqn1, eqn2, eqn3, eqn4];
 [x1_t, x2_t, x3_t, x4_t]       = solve(sys,[dx1,dx2,dx3,dx4]);
+
 %6b. verify that the equilibrium is in [0,0,0,0]
 x1_t = subs(x1_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
 x2_t = subs(x2_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
 x3_t = subs(x3_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
 x4_t = subs(x4_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
+
 %7. system in normal canonical form
 syms x2_t x3_t x4_t
 x1_t_dot = x2_t;
 x2_t_dot = x3_t;
 x3_t_dot = x4_t;
 x4_t_dot = y_dddd;
+v = simplify(y_dddd,'steps',10)
  %8. Finding u
  
 % u(t) = -1/5000000*(x4_tilde_dot + 75000*x3(t) - 8000000*x2(t) - 4414500*cos(x2(t)) + 8000000*x4(t) + (8829*sin(x2(t))*((8829*cos(x2(t)))/4 + 2000*x2(t) - 2000*x4(t)))/4 - (8829*cos(x2(t))*x1(t)^2)/4);
