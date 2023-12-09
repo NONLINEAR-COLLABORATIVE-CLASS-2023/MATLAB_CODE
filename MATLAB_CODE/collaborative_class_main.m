@@ -67,7 +67,7 @@ p_closeloop_ext = eig(A_ext-B_ext*K_ext); % poles of the extended closed loop sy
 
 %% RESPONSE WITH K
 
-x_init= [1, 2, 3, 4]';
+x_init= [0, 0, 0, 0]';
 
 sys = ss(Alin - Blin*K, zeros(4,1), eye(4), Dlin);
 [y, t]= initial(sys, x_init);
@@ -79,6 +79,22 @@ end
 figure(1)
 plot(t, u);
 grid on
+
+
+%% PID 
+
+s = tf('s');
+G =Clin*(s*eye(4)-(Alin-Blin*K))^-1*Blin;
+
+kp=10;
+R2= kp*G^(-1)/(s*(s/500+1)^4); 
+L2=G*R2;
+
+%[N2, D2]= tfdata(R2);
+
+figure
+%bode(L); grid on; title('L');
+bode(L2); grid on; title('L2');
 
 %% RESPONSE WITH K_ext
 
@@ -226,10 +242,10 @@ x1_t_dot = x2_t;
 x2_t_dot = x3_t;
 x3_t_dot = x4_t;
 x4_t_dot = y_dddd;
-v = simplify(y_dddd,'steps',10);
+%%v = simplify(y_dddd,'steps',10)
  %8. Finding u
 
- 
+
  %% REGULATOR
 s = tf('s');
 kp = 1;
