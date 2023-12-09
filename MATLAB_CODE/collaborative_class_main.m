@@ -226,11 +226,10 @@ x1_t_dot = x2_t;
 x2_t_dot = x3_t;
 x3_t_dot = x4_t;
 x4_t_dot = y_dddd;
-v = simplify(y_dddd,'steps',10)
+v = simplify(y_dddd,'steps',10);
  %8. Finding u
- 
-% u(t) = -1/5000000*(x4_tilde_dot + 75000*x3(t) - 8000000*x2(t) - 4414500*cos(x2(t)) + 8000000*x4(t) + (8829*sin(x2(t))*((8829*cos(x2(t)))/4 + 2000*x2(t) - 2000*x4(t)))/4 - (8829*cos(x2(t))*x1(t)^2)/4);
-%% REGULATOR
+
+ %% REGULATOR
 s = tf('s');
 kp = 1;
 G = 1/s^4;
