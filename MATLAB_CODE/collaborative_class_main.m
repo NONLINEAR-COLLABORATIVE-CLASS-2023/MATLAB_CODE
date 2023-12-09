@@ -229,6 +229,7 @@ x4_t_dot = y_dddd;
 v = simplify(y_dddd,'steps',10);
  %8. Finding u
 
+ 
  %% REGULATOR
 s = tf('s');
 kp = 1;
