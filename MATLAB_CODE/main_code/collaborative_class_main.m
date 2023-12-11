@@ -127,8 +127,8 @@ Kv = -K_ext(1, 5) ;          %additional integrator gain
 %% OPTIMAL CONTROL : LQ 
 
 % Tunable matrix intialization
-Q = 10*eye(4);
-R = 0.1*diag(1);
+Q = eye(4);
+R = diag(1);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
@@ -177,8 +177,8 @@ A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
 B_tilde = [Blin ; 0 ] ;
 
 %tunable matrixes 
-Q_lq = eye(5) ;
-R_lq = 10000*eye(1) ;
+Q_lq = 100*eye(5) ;
+R_lq = 0.001*eye(1) ;
 
 % check reachability and observability 
 rank(ctrb(A_tilde, B_tilde));
@@ -190,6 +190,20 @@ rank(obsv(A_tilde, C_q));
 
 K_lqx = K_lqe(:,1:4) ;
 K_lqeta = K_lqe(:, 5) ;
+
+%system with Lq
+dxdt3 = @(t,y)mysystemode(t,y, A_tilde-B_tilde*K_lqe) ;
+tspan3 = [0 10] ;
+y03 = ones(5,1);
+[t3,y3] = ode45(dxdt3, tspan3, y03) ;
+
+figure(5)
+plot(t3, y3(:, 2),'b');
+grid on
+xlabel('Time');
+ylabel('x2');
+title('Evolution of state 2 - LQ control with integrators');
+return
 
 %% ----------------------------------------------------------------------------------------------
 %% FEEDBACK LINEARIZATION
@@ -238,6 +252,45 @@ y_dddd = diff(y_ddd,t);
 
 y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl;
 
+%%
+%check the realtive degree of the system
+y_d_sub = subs(y_d, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_dd_sub = subs(y_dd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_ddd_sub = subs(y_ddd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_dddd_sub  = subs(y_dddd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+
+rd = zeros(1,1) ;
+
+if y_d_sub ~= 0 
+    rd =  1 ;
+elseif y_dd_sub ~= 0 
+        rd = 2 ;
+elseif y_ddd_sub ~= 0 
+        rd =  3 ;
+elseif y_dddd_sub ~= 0 
+        rd = 4;
+end
+
+%%
+%check the realtive degree of the system
+y_d_sub = subs(y_d, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_dd_sub = subs(y_dd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_ddd_sub = subs(y_ddd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+y_dddd_sub  = subs(y_dddd, [x1(t), cos(x2(t)), x2(t), x3(t), x4(t), u(t), k, Jl, Jm], [0, 0, 0, 0, 0, 1, 1, 1, 1]);
+
+rd = zeros(1,1) ;
+
+if y_d_sub ~= 0 
+    rd =  1 ;
+elseif y_dd_sub ~= 0 
+        rd = 2 ;
+elseif y_ddd_sub ~= 0 
+        rd =  3 ;
+elseif y_dddd_sub ~= 0 
+        rd = 4;
+end
+%%
+
 %3. Change of coordinates to bring equilibrium to [0, 0]
 syms dx1(t) dx2(t) dx3(t) dx4(t)
 dx1_dot = subs(x1_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
@@ -246,14 +299,23 @@ dx3_dot = subs(x3_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar,
 dx4_dot = subs(x4_dot, [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
 dy = subs(y(t), [x1(t),x2(t),x3(t),x4(t)], [dx1(t)+x1_bar, dx2(t)+x2_bar, dx3(t)+x3_bar, dx4(t)+x4_bar]);
 
-%4. diffeomorphism
+%4. Diffeomorphism
 x1_tilde = dy;
-x2_tilde = -dx1; %x2_tilde = diff(dy,t)
-%x3_tilde = diff(x2_tilde,t)
-x3_tilde = -dx1_dot;
-%x4_tilde = diff(x3_tilde,t) ;
-x4_tilde = (k*dx2_dot)/Jl - (k*dx4_dot)/Jl - (g*l*m*sin(pi/4 + dx2(t))*dx2_dot)/Jl;
+x2_tilde = -dx1 ;
+%x3_tilde = diff(x2_tilde,t);
+x3_tilde = dx1_dot ;
+%x4_tilde = diff(x3_tilde, t);
+x4_tilde = (k*dx4_dot)/Jl - (k*dx2_dot)/Jl - (Bl*x1_dot)/Jl + (g*l*m*sin(pi/4 + dx2(t))*dx2_dot)/Jl;
+%%
 
+% check if it's a diffeomorphism. We need to compute the Jacobean and check
+% if the Jacobea is full rank
+f = [x1_tilde ; x2_tilde ; x3_tilde ; x4_tilde] ;
+
+% compute the Jacobean
+J = jacobian(f, [dx1, dx2, dx3, dx4]);
+rank(J);
+%%
 %6. inverse relationship phi(^-1)
 syms dx1 dx2 dx3 dx4 dx1_t dx2_t dx3_t dx4_t
 eqn1 = dx1_t == -dx2;
