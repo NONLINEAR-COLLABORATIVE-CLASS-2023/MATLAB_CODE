@@ -1,6 +1,7 @@
 clear all;
 clc;
 close all;
+
 %% COLLABORATIVE CLASS
 %   Matteo Mastromauro
 %   Kevin Ortega
@@ -203,7 +204,7 @@ grid on
 xlabel('Time');
 ylabel('x2');
 title('Evolution of state 2 - LQ control with integrators');
-return
+
 
 %% ----------------------------------------------------------------------------------------------
 %% FEEDBACK LINEARIZATION
@@ -345,7 +346,7 @@ v = y_dddd;
 syms x1 x2 x3 x4 u v_sim k Bm Jm Jl g l m 
 v = (g*l*m*sin(x2)*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (k*(u/Jm - (Bm*x3)/Jm + (k*x2)/Jm - (k*x4)/Jm))/Jl - (k*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (g*l*m*cos(x2)*x1^2)/Jl;
 eqn = v_sim == v;
-U = solve(eqn, u)
+U = solve(eqn, u);
 
  %% PARAMETERS FOR SIMULINK SIMULATION
 
@@ -373,7 +374,8 @@ A_tilde = [0 1 0 0;
                 0,0,0,0];
 B_tilde = [0,0,0,1]';
 
-p_tilde = [-10, -10.1, -10.2, -10.3]; % poles choosen for pole placement
+p_tilde = 100*[-1, -1.1, -1.2, -1.3]; % poles choosen for pole placement
+
 Kv_tilde = place(A_tilde, B_tilde, p_tilde);
 p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
 
@@ -385,7 +387,7 @@ kp = 1;
 G = 1/s^4;
 R = kp*(s+0.001)^3/(s/50+1)^4;
 L = G*R;
-%bode(L), grid on;
+bode(L), grid on;
 
 syms s
 R = kp*(s+0.001)^3/(s/50+1)^4;
