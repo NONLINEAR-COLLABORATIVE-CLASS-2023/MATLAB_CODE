@@ -31,10 +31,10 @@ x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
 
 %% LINEARIZATION
 
-Alin= [0    -k/Jl + m*g*l*sin(x2_bar)/Jl        0            k/Jl;
+Alin= [0    -k/Jl + m*g*l*sin(x2_bar)/Jl                     0           k/Jl;
         1                        0                           0             0;
-        0                      k/Jm                     -Bm/Jm      -k/Jm;
-        0                       0                           1              0];
+        0                      k/Jm                       -Bm/Jm      -k/Jm;
+        0                        0                           1              0];
 
 Blin = [0; 0; 1/Jm; 0];
 
@@ -135,7 +135,7 @@ R = diag(1);
 
 % K_lq response
 
-A_lq = Alin-Blin*K ;
+A_lq = Alin-Blin*K_lq ;
 B_lq = zeros(4,1) ;
 C_lq = Clin ;
 D_lq = 0;
@@ -369,9 +369,9 @@ x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
 %% FEEDBACK GAIN TUNING Kv_lin
 
 A_tilde = [0 1 0 0;
-                0,0,1,0;
-                0,0,0,1;
-                0,0,0,0];
+           0,0,1,0;
+           0,0,0,1;
+           0,0,0,0];
 B_tilde = [0,0,0,1]';
 
 p_tilde = 100*[-1, -1.1, -1.2, -1.3]; % poles choosen for pole placement
