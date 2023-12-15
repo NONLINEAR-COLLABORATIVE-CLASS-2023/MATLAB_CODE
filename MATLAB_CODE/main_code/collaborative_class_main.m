@@ -92,12 +92,14 @@ end
 
 s = tf('s');
 G =Clin*(s*eye(4)-(Alin-Blin*K))^-1*Blin;
-wc = 0.01; % rad/s
+wc = 1; % rad/s
 R = 1/s;
 L = R*G;
 kp = 1/abs(freqresp(L,wc));
 R = kp/s;
 L = R*G;
+phi_c = angle(freqresp(L,wc));
+phi_m = (pi + phi_c)*180/pi
 
 % uncomment to plot
 figure(1)
@@ -235,7 +237,7 @@ eqn2 = 0 == x2_dot;
 eqn3 = 0 == x3_dot;
 eqn4 = 0 == x4_dot;
 
-[x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)]);
+[x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)])
  
 % 1. system definition
 syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
@@ -377,13 +379,30 @@ A_tilde = [0 1 0 0;
            0,0,0,1;
            0,0,0,0];
 B_tilde = [0,0,0,1]';
-
-p_tilde = 100*[-1, -1.1, -1.2, -1.3]; % poles choosen for pole placement
+C_tilde = [1 0 0 0];
+p_tilde = -50+[-0, -0.1, -0.2, -0.3]; % poles choosen for pole placement
 
 Kv_tilde = place(A_tilde, B_tilde, p_tilde);
 p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
 
+%% PID for feedback linearization
 
+s = tf('s');
+G_v =C_tilde*(s*eye(4)-(A_tilde-B_tilde*Kv_tilde))^-1*B_tilde;
+wc = 1; % rad/s
+R_v = 1/s;
+L_v = R_v*G_v;
+kp_v = 1/abs(freqresp(L_v,wc));
+R_v = kp_v/s;
+L_v = R_v*G_v;
+phi_c = angle(freqresp(L_v,wc));
+phi_m = (pi + phi_c)*180/pi
+
+% uncomment to plot
+figure(1)
+bode(L); grid on; title('L');
+figure(2)
+bode(R); grid on; title('R');
 
 %% REGULATOR
 s = tf('s');
