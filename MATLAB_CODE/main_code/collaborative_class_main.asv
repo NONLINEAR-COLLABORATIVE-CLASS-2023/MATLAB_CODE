@@ -92,7 +92,7 @@ end
 
 s = tf('s');
 G =Clin*(s*eye(4)-(Alin-Blin*K))^-1*Blin;
-wc = 0.01; % rad/s
+wc = 0.; % rad/s
 R = 1/s;
 L = R*G;
 kp = 1/abs(freqresp(L,wc));
