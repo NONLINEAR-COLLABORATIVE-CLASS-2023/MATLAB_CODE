@@ -20,7 +20,6 @@ l = 0.3;
 g = 9.81;
 const = sqrt(2)*m*g*l/(2*Jl); %% needed for simulink simulation
 
-
 %% EQUILIBRIUM
 x1_bar = 0;
 x2_bar = pi/4;
@@ -28,6 +27,31 @@ x3_bar = 0;
 x4_bar = m*g*l*cos(x2_bar)/k + x2_bar;
 u_bar= m*g*l*cos(x2_bar);
 x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
+
+% computation of the equilibrium position
+
+% syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
+% syms  Bm Jl Jm m g l k %system parameters, comment if you want the numerical expression
+% 
+% x1_dot = -Bl/Jl*x1(t)-k/Jl*x2(t)-m*g*l/Jl*cos(x2(t))+k/Jl*x4(t);
+% x2_dot = x1(t);
+% x3_dot = k/Jm*x2(t)-Bm/Jm*x3(t)-k/Jm*x4(t)+u(t)/Jm;
+% x4_dot = x3(t);
+% 
+% x1_dot = subs(x1_dot,x2(t),pi/4);
+% x2_dot = subs(x2_dot,x2(t),pi/4);
+% x3_dot = subs(x3_dot,x2(t),pi/4);
+% x4_dot = subs(x4_dot,x2(t),pi/4);
+% 
+% 
+% eqn1 = 0 == x1_dot;
+% eqn2 = 0 == x2_dot;
+% eqn3 = 0 == x3_dot;
+% eqn4 = 0 == x4_dot;
+% 
+% [x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)]) ;
+% 
+% x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
 
 %% LINEARIZATION
 
@@ -42,16 +66,25 @@ Clin= [0    1   0   0];             %applichiamo a x2(theta l) perchè abbiamo s
 
 Dlin = zeros(1);
 
+
 %% POLES OF THE SYSTEM
 
-poles_lin= eig(Alin);
+sys = ss(Alin, Blin, Clin, Dlin) ;
+G = tf(sys) ;
+
+pole(G); % computation of the poles of the linearised system 
+zero(G); % computation of the zeros of the linearised system 
+
 
 %% POLE PLACEMENT (FOR STABILIZATION)
 
 C0 = ctrb(Alin, Blin);          %controllability matrix
-rank_C0 = rank(C0);          %rank of controllability matrix
+rank_C0 = rank(C0);  %rank of controllability matrix
 
-p = -15 + [-0, -0.1, -0.2, -0.3]; % poles choosen for pole placement
+%we decide to put the poles all in -50
+rho = -40; % same rho for the two approaches to do some anaylsis 
+
+p = rho + [-0, -0.1, -0.2, -0.3]; % poles choosen for pole placement
 K = place(Alin, Blin, p);
 
 p_closeloop= eig(Alin-Blin*K);
@@ -66,10 +99,18 @@ B_ext = [Blin; zeros(1)];               %B extended matrix
 C0_ext = ctrb(A_ext, B_ext);      %C extended matrix
 rank_C0_ext = rank(C0_ext);
 
-p_ext = 2*[-10, -10.1, -10.2, -10.3, -10.4];    %poles of the extended system
+p_ext = rho+[0, -0.1, -0.2, -0.3, -0.4];    %poles of the extended system
 K_ext = place(A_ext, B_ext, p_ext);           %pole placement gain
 
 p_closeloop_ext = eig(A_ext-B_ext*K_ext); % poles of the extended closed loop system
+
+%% SIMULINK MODEL INITILIZATION
+
+x_0 = x_bar+0.01;           %integral initialization
+
+Kx = -K_ext(1, 1:4) ;       %state feedback gain
+Kv = -K_ext(1, 5) ;          %additional integrator gain
+
 
 %% RESPONSE WITH K
 
@@ -91,21 +132,22 @@ end
 %% PID for the linearized system
 
 s = tf('s');
-G =Clin*(s*eye(4)-(Alin-Blin*K))^-1*Blin;
+G_pp = Clin*(s*eye(4)-(Alin-Blin*K))^-1*Blin;
 wc = 1; % rad/s
-R = 1/s;
-L = R*G;
-kp = 1/abs(freqresp(L,wc));
-R = kp/s;
-L = R*G;
-phi_c = angle(freqresp(L,wc));
-phi_m = (pi + phi_c)*180/pi
+R_pp = 1/s;
+L_pp = R_pp*G_pp;
+kp = 1/abs(freqresp(L_pp,wc));
+R_pp = kp/s;
+L_pp = R_pp*G_pp;
+phi_c = angle(freqresp(L_pp,wc));
+phi_m = (pi + phi_c)*180/pi;
 
 % uncomment to plot
 figure(1)
-bode(L); grid on; title('L');
+bode(L_pp); grid on; title('L');
 figure(2)
-bode(R); grid on; title('R');
+bode(R_pp); grid on; title('R');
+
 
 %% RESPONSE WITH K_ext
 
@@ -123,19 +165,14 @@ end
 % plot(t, u_ext);
 % grid on
 
-%% SIMULINK MODEL INITILIZATION
 
-x_0 = x_bar+0.01;           %integral initialization
-
-Kx = -K_ext(1, 1:4) ;       %state feedback gain
-Kv = -K_ext(1, 5) ;          %additional integrator gain
 
 %% ------------------------------------------------
 %% OPTIMAL CONTROL : LQ 
 
 % Tunable matrix intialization
-Q = eye(4);
-R = diag(1);
+Q = 1*eye(4);
+R = 10*diag(1);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
@@ -148,17 +185,17 @@ D_lq = 0;
 
 % plot the evolution of the state x2 (control variable)
 
-%linearised system
-dxdt1 = @(t,y)mysystemode(t,y, A_ext-B_ext*K_ext) ;
-tspan1 = [0 5] ;
-y01 = ones(5,1);
-[t1,y1] = ode45(dxdt1, tspan1, y01) ;
-
-%system with Lq
-dxdt2 = @(t,y)mysystemode(t,y, A_lq) ;
-tspan2 = [0 5] ;
-y02 = ones(4,1);
-[t2,y2] = ode45(dxdt2, tspan2, y02) ;
+% %linearised system
+% dxdt1 = @(t,y)mysystemode(t,y, A_ext-B_ext*K_ext) ;
+% tspan1 = [0 5] ;
+% y01 = ones(5,1);
+% [t1,y1] = ode45(dxdt1, tspan1, y01) ;
+% 
+% %system with Lq
+% dxdt2 = @(t,y)mysystemode(t,y, A_lq) ;
+% tspan2 = [0 5] ;
+% y02 = ones(4,1);
+% [t2,y2] = ode45(dxdt2, tspan2, y02) ;
 
 
 % uncomment to plot
@@ -184,8 +221,8 @@ A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
 B_tilde = [Blin ; 0 ] ;
 
 %tunable matrixes 
-Q_lq = 100*eye(5) ;
-R_lq = 0.001*eye(1) ;
+Q_lq = 0.1*eye(5) ;
+R_lq = 1*eye(1) ;
 
 % check reachability and observability 
 rank(ctrb(A_tilde, B_tilde));
@@ -198,19 +235,57 @@ rank(obsv(A_tilde, C_q));
 K_lqx = K_lqe(:,1:4) ;
 K_lqeta = K_lqe(:, 5) ;
 
-%system with Lq
-dxdt3 = @(t,y)mysystemode(t,y, A_tilde-B_tilde*K_lqe) ;
-tspan3 = [0 10] ;
-y03 = ones(5,1);
-[t3,y3] = ode45(dxdt3, tspan3, y03) ;
+% %system with Lq
+% dxdt3 = @(t,y)mysystemode(t,y, A_tilde-B_tilde*K_lqe) ;
+% tspan3 = [0 5] ;
+% y03 = ones(5,1);
+% [t3,y3] = ode45(dxdt3, tspan3, y03) ;
+% 
+% figure(5)
+% plot(t3, y3(:, 2),'b');
+% grid on
+% xlabel('Time');
+% ylabel('x2');
+% title('Evolution of state 2 - LQ control with integrators');
 
-figure(5)
-plot(t3, y3(:, 2),'b');
-grid on
-xlabel('Time');
-ylabel('x2');
-title('Evolution of state 2 - LQ control with integrators');
+%% H2 PROBLEM 
 
+n = 5 ; %n of states
+p = 1 ; %n of inputs
+m = 1 ; %number of outputs
+
+q = 100; %0.01
+r = 0.1;  %10
+qt = 0 ; 
+rt = 0 ;
+
+% definition of the matrixes 
+A = [Alin zeros(4,1) ;
+    -Clin   0 ];
+
+B1 = [sqrt(qt)*eye(n) zeros(n,p)];
+B2 = [Blin ; 0];
+
+C1 = [sqrt(q)*eye(n) ; zeros(m,n)];
+C2 = [Clin 0] ;
+
+D11 = [zeros(n,n) zeros(n,p) ; zeros(m,n) zeros(m,p)];
+D12 = [zeros(n,m) ; sqrt(r)*eye(m)] ;
+D21 = [zeros(p,n)  sqrt(rt)*eye(p,p)] ;
+D22 = [Dlin] ;
+
+AA = A;
+BB = [B1 B2] ;
+CC = [C1 ; C2] ;
+DD = [D11 D12 ; D21 D22] ;
+
+P_H2 = are(A, B2*D12'*D12*B2', C1'*C1);
+K_H2 = (D12'*D12)*B2'*P_H2;
+
+K_H2_X = K_H2(:,1:4) ;
+K_H2_V = K_H2(:, 5) ;
+
+return
 
 %% ----------------------------------------------------------------------------------------------
 %% FEEDBACK LINEARIZATION
@@ -370,7 +445,6 @@ x3_bar = 0;
 x4_bar = m*g*l*cos(x2_bar)/k + x2_bar;
 u_bar= m*g*l*cos(x2_bar);
 x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
-
 
 %% FEEDBACK GAIN TUNING Kv_lin
 
