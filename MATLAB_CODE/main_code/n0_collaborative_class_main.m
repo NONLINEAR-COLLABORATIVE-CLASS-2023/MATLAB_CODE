@@ -20,6 +20,10 @@ l = 0.3;
 g = 9.81;
 const = sqrt(2)*m*g*l/(2*Jl); 
 
+%% 1. STATE SPACE REPRESENTATION OF THE NONLINEAR SYSTEM
+
+% Simulink file "_1_nonlinear_system.slx"
+
 %% 2. LINEARIZATION and EQUILIBRIUM
 % linear tangent approximation at the point corresponding to θl =π/4
 
@@ -193,6 +197,10 @@ K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
 p_H2 = eig(Alin-Blin*K_H2_X);
 
+%% 3. TEST THE LINEARIZED CONTROL-LAW
+
+% Simulink file "_3_linearized_system_control.slx"
+
 %% 4 FEEDBACK LINEARIZATION
 
 % 4.1 RELATIVE DEGREE OF NONLINEAR SYSTEM
@@ -325,4 +333,13 @@ R_v = kp_v/s;
 L_v = R_v*G_v;
 phi_c = angle(freqresp(L_v,wc));
 phi_m = (pi + phi_c)*180/pi;
+
+%% 5. TEST THE STATE-FEEDBACK LINEARIZING CONTROL-LAW with LTI-controller
+
+% Simulink file "_5_feedback_linearization_LTI_controller.slx"
+
+%% 6. VARIABLE STRUCTURE CONTROLLER
+
+
+
 

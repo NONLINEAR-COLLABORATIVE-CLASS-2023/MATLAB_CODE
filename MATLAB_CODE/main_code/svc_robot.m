@@ -4,6 +4,29 @@
 
 % structure variable controller done on the system linearized through
 % feedback linearization
+%% PARAMETERS
+
+k = 0.8;
+Jm = 4e-4;
+Jl= 4e-4;
+Bm = 0.015;
+Bl = 0;
+m = 0.3;
+l = 0.3;
+g = 9.81;
+const = sqrt(2)*m*g*l/(2*Jl); 
+
+% 2.1 EQUILIBRIUM
+x1_bar = 0;
+x2_bar = pi/4;
+x3_bar = 0;
+x4_bar = m*g*l*cos(x2_bar)/k + x2_bar;
+u_bar= m*g*l*cos(x2_bar);
+x_bar = [x1_bar x2_bar x3_bar x4_bar]';
+y_bar = -x2_bar;
+
+dx_0 = [0;1;0;1]*0.1;  
+
 
 %% 
 
@@ -26,7 +49,7 @@ alfa_prime= beta_prime*A;
 
 %% parameters q, r
 
-q = 5;
+q = 20;
 r = 0.7;
 
 %% hysteresis parameters
@@ -71,4 +94,13 @@ beta3_t= beta_prime_t(1);
 b4_t= H_tilde(1);
 gamma_t= beta3_t/b4_t;
 alfa_prime_t= beta_prime_t*F_tilde;
+
+
+%% LOAD DISTURBANCES(done on system without integrator)
+
+W = 2;
+A_new= A - B*alfa_prime;
+
+
+
 
