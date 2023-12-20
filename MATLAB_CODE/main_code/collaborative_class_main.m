@@ -82,7 +82,7 @@ C0 = ctrb(Alin, Blin);          %controllability matrix
 rank_C0 = rank(C0);  %rank of controllability matrix
 
 %we decide to put the poles all in -50
-rho = -40; % same rho for the two approaches to do some anaylsis 
+rho = -50; % same rho for the two approaches to do some anaylsis 
 
 p = rho + [-0, -0.1, -0.2, -0.3]; % poles choosen for pole placement
 K = place(Alin, Blin, p);
@@ -147,25 +147,6 @@ figure(1)
 bode(L_pp); grid on; title('L');
 figure(2)
 bode(R_pp); grid on; title('R');
-
-
-%% RESPONSE WITH K_ext
-
-x_init_ext= [0.5 0.5 0.5 0.5 1] ;
-
-sys_ext = ss(A_ext - B_ext*K_ext, zeros(5, 1), eye(5), Dlin);
-[y_ext, t]= initial(sys_ext, x_init_ext);
-
-for j= 1:1:length(t)
-    u_ext(j,:)= -K_ext*y_ext(j,:)';
-end
-
-% uncomment to plot
-% figure(2)
-% plot(t, u_ext);
-% grid on
-
-
 
 %% ------------------------------------------------
 %% OPTIMAL CONTROL : LQ 
@@ -472,7 +453,7 @@ A_tilde = [0 1 0 0;
            0,0,0,0];
 B_tilde = [0,0,0,1]';
 C_tilde = [1 0 0 0];
-p_tilde = -50+[-0, -0.1, -0.2, -0.3]; % poles choosen for pole placement
+p_tilde = -50+[-0, -1, -2, -3]; % poles choosen for pole placement
 
 Kv_tilde = place(A_tilde, B_tilde, p_tilde);
 p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
@@ -481,7 +462,7 @@ p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
 
 s = tf('s');
 G_v =C_tilde*(s*eye(4)-(A_tilde-B_tilde*Kv_tilde))^-1*B_tilde;
-wc = 1; % rad/s
+wc = 3; % rad/s
 R_v = 1/s;
 L_v = R_v*G_v;
 kp_v = 1/abs(freqresp(L_v,wc));
@@ -492,18 +473,6 @@ phi_m = (pi + phi_c)*180/pi
 
 % uncomment to plot
 figure(1)
-bode(L); grid on; title('L');
+bode(L_v); grid on; title('L_v');
 figure(2)
-bode(R); grid on; title('R');
-
-%% REGULATOR
-s = tf('s');
-kp = 1;
-G = 1/s^4;
-R = kp*(s+0.001)^3/(s/50+1)^4;
-L = G*R;
-bode(L), grid on;
-
-syms s
-R = kp*(s+0.001)^3/(s/50+1)^4;
-v = ilaplace(R);
+bode(R_v); grid on; title('R_v');
