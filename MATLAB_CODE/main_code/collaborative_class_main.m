@@ -171,8 +171,8 @@ end
 %% OPTIMAL CONTROL : LQ 
 
 % Tunable matrix intialization
-Q = 1*eye(4);
-R = 10*diag(1);
+Q = 0.1*eye(4);
+R = 1*diag(1);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
@@ -218,22 +218,37 @@ D_lq = 0;
 %now we want to enlarge the system in order to add an integrator 
 
 A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
-B_tilde = [Blin ; 0 ] ;
+B_tilde = [Blin; 0];
+
+r =  1/0.024; 
+q =  1;
+
+disp(q/r);
 
 %tunable matrixes 
-Q_lq = 0.1*eye(5) ;
-R_lq = 1*eye(1) ;
+Q_lq = q*eye(5) ; %1 
+R_lq = r*eye(1) ; %1000
 
 % check reachability and observability 
 rank(ctrb(A_tilde, B_tilde));
 C_q = sqrt(Q_lq) ;
 rank(obsv(A_tilde, C_q));
 
+% P_lq = are(A_tilde, B_tilde*R_lq*B_tilde', Q_lq) 
+% k = R_lq^(-1)*B_tilde'*P_lq;
+% k_x = k(:, 1:4) ;
+% eig(Alin-Blin*k_x) 
+% 
+% return 
+
 % computation of the gain for l1
 [K_lqe, S, P] = lqr(A_tilde, B_tilde, Q_lq, R_lq) ;
 
 K_lqx = K_lqe(:,1:4) ;
 K_lqeta = K_lqe(:, 5) ;
+
+eig(Alin-Blin*K_lqx);
+ 
 
 % %system with Lq
 % dxdt3 = @(t,y)mysystemode(t,y, A_tilde-B_tilde*K_lqe) ;
@@ -248,16 +263,18 @@ K_lqeta = K_lqe(:, 5) ;
 % ylabel('x2');
 % title('Evolution of state 2 - LQ control with integrators');
 
+
+
 %% H2 PROBLEM 
 
 n = 5 ; %n of states
 p = 1 ; %n of inputs
-m = 1 ; %number of outputs
+m = 1 ; %number of outpuRts
 
-q = 100; %0.01
-r = 0.1;  %10
-qt = 0 ; 
-rt = 0 ;
+q =     1; %0.01
+r =      100;  %10
+qt =      0 ; 
+rt =      0 ;
 
 % definition of the matrixes 
 A = [Alin zeros(4,1) ;
@@ -284,6 +301,7 @@ K_H2 = (D12'*D12)*B2'*P_H2;
 
 K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
+eig(Alin-Blin*K_H2_X)
 
 return
 
