@@ -216,7 +216,7 @@ eqn2 = 0 == x2_dot;
 eqn3 = 0 == x3_dot;
 eqn4 = 0 == x4_dot;
 
-[x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)]);
+[x1_bar, x3_bar, x4_bar,u_bar] = solve([eqn1,eqn2,eqn3,eqn4],[x1(t),x3(t),x4(t),u(t)])
  
 % 4.1.2 computation of the relative degree "rd"
 syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
@@ -272,19 +272,47 @@ x2_tilde = -dx1 ;
 x3_tilde = dx1_dot ;
 x4_tilde = (k*dx4_dot)/Jl - (k*dx2_dot)/Jl - (Bl*x1_dot)/Jl + (g*l*m*sin(pi/4 + dx2(t))*dx2_dot)/Jl;
 
-% check if the diffeomorphism is well defined over the entire R^4: We need to compute the Jacobian and check
-% if the Jacobian is full rank over the entire R^4
+% check if the diffeomorphism. We need to compute the Jacobean and check
+% if the Jacobea is full rank
 f = [x1_tilde ; x2_tilde ; x3_tilde ; x4_tilde] ;
+
+% compute the Jacobean
 J = jacobian(f, [dx1, dx2, dx3, dx4]);
 rank(J);
+%%
+%6. inverse relationship phi(^-1)
+syms dx1 dx2 dx3 dx4 dx1_t dx2_t dx3_t dx4_t
+eqn1 = dx1_t == -dx2;
+eqn2 = dx2_t == -dx1;
+eqn3 = dx3_t == k*(dx2+pi/4)/Jl+m*g*l*cos(dx2+pi/4)/Jl-k*(dx4+x4_bar)/Jl;
+eqn4 = dx4_t == k/Jl*dx1-m*g*l/Jl*sqrt(2)/2*(sin(dx2)+cos(dx2))*dx1-k/Jl*dx3;
+sys    = [eqn1, eqn2, eqn3, eqn4];
+[x1_t, x2_t, x3_t, x4_t]       = solve(sys,[dx1,dx2,dx3,dx4]);
 
-% 4.2.3 Finding u(t)
+%6b. verify that the equilibrium is in [0,0,0,0]
+x1_t = subs(x1_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
+x2_t = subs(x2_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
+x3_t = subs(x3_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
+x4_t = subs(x4_t,[dx1_t,dx2_t,dx3_t,dx4_t], [0,0,0,0]);
+
+%7. system in normal canonical form
+syms x2_t x3_t x4_t
+x1_t_dot = x2_t;
+x2_t_dot = x3_t;
+x3_t_dot = x4_t;
+x4_t_dot = y_dddd;
+
+y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl;
+v = y_dddd;
+
+ %8. Finding u
 syms x1 x2 x3 x4 u v_sim k Bm Jm Jl g l m 
 v = (g*l*m*sin(x2)*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (k*(u/Jm - (Bm*x3)/Jm + (k*x2)/Jm - (k*x4)/Jm))/Jl - (k*((k*x2)/Jl - (k*x4)/Jl + (g*l*m*cos(x2))/Jl))/Jl - (g*l*m*cos(x2)*x1^2)/Jl;
 eqn = v_sim == v;
-U = solve(eqn, u);  % used in the block MatLab function "u computation"
+U = solve(eqn, u);
 
-% overwrite the symbolic parameter with the numerical values 
+ %% PARAMETERS FOR SIMULINK SIMULATION
+
 k = 0.8;
 Jm = 4e-4;
 Jl= 4e-4;
@@ -300,9 +328,8 @@ x4_bar = m*g*l*cos(x2_bar)/k + x2_bar;
 u_bar= m*g*l*cos(x2_bar);
 x_bar = [x1_bar x2_bar x3_bar x4_bar] ;
 
-% 4.3 STABILIZING CONTROL-LAW on the feedback linearized system
+%% FEEDBACK GAIN TUNING Kv_lin
 
-% 4.3.1 FEEDBACK GAIN TUNING Kv_tilde
 A_tilde = [0 1 0 0;
            0,0,1,0;
            0,0,0,1;
@@ -312,9 +339,10 @@ C_tilde = [1 0 0 0];
 p_tilde = -50+[-0, -1, -2, -3]; % poles choosen for pole placement
 
 Kv_tilde = place(A_tilde, B_tilde, p_tilde);
-p_tilde_pole_placement = eig(A_tilde-B_tilde*Kv_tilde);
+p_tilde_closeloop= eig(A_tilde-B_tilde*Kv_tilde);
 
-% 4.3.2 PID over the pole placement Kv_tilde
+%% PID for feedback linearization
+
 s = tf('s');
 G_v =C_tilde*(s*eye(4)-(A_tilde-B_tilde*Kv_tilde))^-1*B_tilde;
 wc = 3; % rad/s
@@ -324,5 +352,10 @@ kp_v = 1/abs(freqresp(L_v,wc));
 R_v = kp_v/s;
 L_v = R_v*G_v;
 phi_c = angle(freqresp(L_v,wc));
-phi_m = (pi + phi_c)*180/pi;
+phi_m = (pi + phi_c)*180/pi
 
+% uncomment to plot
+figure(1)
+bode(L_v); grid on; title('L_v');
+figure(2)
+bode(R_v); grid on; title('R_v');
