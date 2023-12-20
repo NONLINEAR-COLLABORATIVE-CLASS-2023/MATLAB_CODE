@@ -242,7 +242,7 @@ y_ddd = diff(y_dd,t);
 y_ddd  = (k*x2_dot)/Jl - (k*x4_dot)/Jl - (g*l*m*sin(x2(t))*x2_dot)/Jl;
 y_dddd = diff(y_ddd,t);
 
-%substituting diff(x,t) in order to include it in the simulink scheme
+%substituting diff(x,t) in order to include the exrpession in the simulink scheme
 
 y_dddd = (k*x1_dot)/Jl - (k*x3_dot)/Jl - (g*l*m*sin(x2(t))*x1_dot)/Jl - (g*l*m*cos(x2(t))*x1(t)*x2_dot)/Jl;
 
@@ -340,6 +340,73 @@ phi_m = (pi + phi_c)*180/pi;
 
 %% 6. VARIABLE STRUCTURE CONTROLLER
 
+% 6.1 
+% 6.1.1 ENLARGED SYSTEM DEFINITION and parameters tuning
+A_tilde = [0      1       0       0;
+    0      0       1       0;
+    0      0       0       1;
+    0      0       0       0;];
 
+B_tilde = [0   0   0   1]';
+
+C_tilde = [1   0   0   0];
+
+p = +10;                             %poli
+beta_prime= [p^3 3*p^2 3*p 1];
+beta3= beta_prime(1);
+b4= C_tilde(1);
+gamma= beta3/b4;
+alfa_prime= beta_prime*A_tilde;
+
+%  parameters q, r
+q = 20;
+r = 0.7;
+
+% hysteresis parameters
+
+BI= 0.02;
+M= 1;
+
+%6.1.2 ENLARGED SYSTEM (WITH INTEGRATOR)
+
+F= [A_tilde           B_tilde;
+    zeros(1,4)  0];
+G= [zeros(4,1); 1];
+H= [C_tilde   0];
+
+
+Mr = ctrb(F, G);
+
+a_tilde= poly(F);
+a= flip(-a_tilde);
+A_tilde=   [0     1       0       0       0;
+                 0     0       1       0       0;
+                 0     0       0       1       0;
+                 0     0       0       0       1;
+                 a(1:5)];
+
+B_tilde= [0 0 0 0 1]';
+Mr_tilde = ctrb(A_tilde, B_tilde);
+
+T= Mr_tilde*Mr^-1;
+
+F_tilde= T*F*T^-1;
+G_tilde= T*G;
+H_tilde= H*T^-1;
+
+
+p_t = -10; 
+beta_prime_t= flip(poly([p_t p_t p_t p_t]));
+beta3_t= beta_prime_t(1);
+b4_t= H_tilde(1);
+gamma_t= beta3_t/b4_t;
+alfa_prime_t= beta_prime_t*F_tilde;
+
+
+% 6.2 LOAD DISTURBANCES ON VSC
+
+W = 2;
+A_new= A_tilde - B_tilde*alfa_prime_t;
+% Simulink file "_6_variable_structure_controller.slx"
 
 
