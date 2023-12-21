@@ -189,7 +189,9 @@ K_H2 = (D12'*D12)^(-1)*B2'*P_H2;
 
 K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
-p_H2 = eig(Alin-Blin*K_H2_X);
+p_H2 = eig(Alin-Blin*K_H2_X)
+
+return
 
 %% 3. TEST THE LINEARIZED CONTROL-LAW
 
