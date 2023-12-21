@@ -65,7 +65,7 @@ dx_0 = [0;1;0;1]*0.1;           %integral initialization
 
 % 2.2 LINEARIZATION
 
-Alin= [0    -k/Jl + m*g*l*sin(x2_bar)/Jl                     0           k/Jl;
+Alin= [ 0    -k/Jl + m*g*l*sin(x2_bar)/Jl                     0           k/Jl;
         1                        0                           0             0;
         0                      k/Jm                       -Bm/Jm        -k/Jm;
         0                        0                           1              0];
@@ -75,6 +75,7 @@ Blin = [0; 0; 1/Jm; 0];
 Clin= [0    1   0   0];             % the output is y(t) = x2(t) = θl(t) 
 
 Dlin = zeros(1);
+
 % POLES OF THE SYSTEM
 
 sys = ss(Alin, Blin, Clin, Dlin) ;
@@ -116,15 +117,19 @@ Kv = -K_ext(1, 5) ;                     %additional integrator gain
 
 p_pole_placement_ext = eig(A_ext-B_ext*K_ext); % poles of the extended closed loop system
 
+%%
+
 % 2.3.3 OPTIMAL CONTROL : LQ 
 
 % Tunable matrix intialization
-Q = 0.1*eye(4);
+Q = 0.01*eye(4);
 R = 1*diag(1);
 
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
 p_LQ = eig(Alin-Blin*K_lq);
+
+%%
 
 % 2.3.4 OPTIMAL CONTROL : LQ with the system enlargment
 
@@ -132,7 +137,7 @@ p_LQ = eig(Alin-Blin*K_lq);
 A_tilde = [Alin zeros(4,1) ; -Clin zeros(1,1)] ;
 B_tilde = [Blin; 0];
 
-r =  1/0.024; 
+r =  1/0.001; 
 q =  1;
 
 %tunable matrixes 
@@ -148,8 +153,7 @@ rank(obsv(A_tilde, C_q));
 % k = R_lq^(-1)*B_tilde'*P_lq;
 % k_x = k(:, 1:4) ;
 % eig(Alin-Blin*k_x) 
-% 
-% return 
+
 
 % computation of the gain for l1
 [K_lqe, S, P] = lqr(A_tilde, B_tilde, Q_lq, R_lq) ;
@@ -159,6 +163,8 @@ K_lqeta = K_lqe(:, 5) ;
 
 p_LQ_ext = eig(Alin-Blin*K_lqx);
 
+%%
+
 % 2.3.5 H2-CONTROL with the system enlargment
 
 n = 5 ; %n of states
@@ -166,7 +172,7 @@ p = 1 ; %n of inputs
 m = 1 ; %number of outpuRts
 
 q =      1; %0.01
-r =      100;  %10
+r =      1;  %10
 qt =      0 ; 
 rt =      0 ;
 
@@ -196,6 +202,9 @@ K_H2 = (D12'*D12)*B2'*P_H2;
 K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
 p_H2 = eig(Alin-Blin*K_H2_X);
+
+return 
+
 
 %% 3. TEST THE LINEARIZED CONTROL-LAW
 
@@ -364,8 +373,8 @@ r = 0.7;
 
 % hysteresis parameters
 
-BI= 0.02;
-M= 1;
+BI = 0.02;
+M = 1;
 
 %6.1.2 ENLARGED SYSTEM (WITH INTEGRATOR)
 
@@ -380,10 +389,10 @@ Mr = ctrb(F, G);
 a_tilde= poly(F);
 a= flip(-a_tilde);
 A_tilde=   [0     1       0       0       0;
-                 0     0       1       0       0;
-                 0     0       0       1       0;
-                 0     0       0       0       1;
-                 a(1:5)];
+            0     0       1       0       0;
+            0     0       0       1       0;
+            0     0       0       0       1;
+            a(1:5)];
 
 B_tilde= [0 0 0 0 1]';
 Mr_tilde = ctrb(A_tilde, B_tilde);
@@ -393,7 +402,6 @@ T= Mr_tilde*Mr^-1;
 F_tilde= T*F*T^-1;
 G_tilde= T*G;
 H_tilde= H*T^-1;
-
 
 p_t = -10; 
 beta_prime_t= flip(poly([p_t p_t p_t p_t]));
@@ -407,6 +415,7 @@ alfa_prime_t= beta_prime_t*F_tilde;
 
 W = 2;
 A_new= A_tilde - B_tilde*alfa_prime_t;
+
 % Simulink file "_6_variable_structure_controller.slx"
 
 
