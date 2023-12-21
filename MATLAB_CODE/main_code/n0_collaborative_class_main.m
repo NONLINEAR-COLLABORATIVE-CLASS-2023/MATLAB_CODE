@@ -36,7 +36,7 @@ u_bar= m*g*l*cos(x2_bar);
 x_bar = [x1_bar x2_bar x3_bar x4_bar]';
 
 % SIMULINK MODEL INITILIZATION
-dx_0 = [0;1;0;1]*0.1;           %integral initialization
+dx_0 = [0;1;0;1]*0.01;           %integral initialization
 
 % computation of the equilibrium position with MatLab
 
@@ -116,8 +116,6 @@ Kv = -K_ext(1, 5) ;                     %additional integrator gain
 
 p_pole_placement_ext = eig(A_ext-B_ext*K_ext); % poles of the extended closed loop system
 
-%%
-
 % 2.3.3 OPTIMAL CONTROL : LQ 
 
 % Tunable matrix intialization
@@ -127,8 +125,6 @@ R = 1*diag(1);
 [K_lq, S, P] = lqr(Alin ,Blin, Q, R);
 
 p_LQ = eig(Alin-Blin*K_lq);
-
-%%
 
 % 2.3.4 OPTIMAL CONTROL : LQ with the system enlargment
 
@@ -148,21 +144,13 @@ rank(ctrb(A_tilde, B_tilde));
 C_q = sqrt(Q_lq) ;
 rank(obsv(A_tilde, C_q));
 
-% P_lq = are(A_tilde, B_tilde*R_lq*B_tilde', Q_lq) 
-% k = R_lq^(-1)*B_tilde'*P_lq;
-% k_x = k(:, 1:4) ;
-% eig(Alin-Blin*k_x) 
+P_lq = are(A_tilde, B_tilde*R_lq*B_tilde', Q_lq) ;
+k = R_lq^(-1)*B_tilde'*P_lq;
 
+k_lqx = k(:, 1:4) ;
+k_lqeta = k(:,5) ;
 
-% computation of the gain for l1
-[K_lqe, S, P] = lqr(A_tilde, B_tilde, Q_lq, R_lq) ;
-
-K_lqx = K_lqe(:,1:4) ;
-K_lqeta = K_lqe(:, 5) ;
-
-p_LQ_ext = eig(Alin-Blin*K_lqx);
-
-%%
+p_LQ_ext = eig(Alin-Blin*k_lqx); 
 
 % 2.3.5 H2-CONTROL with the system enlargment
 
@@ -171,7 +159,7 @@ p = 1 ;             %n of inputs
 m = 1 ;             %number of outpuRts
 
 q =       1;        %0.01
-r =       1;        %10
+r =       1/100;        %10
 qt =      0; 
 rt =      0;
 
@@ -202,7 +190,6 @@ K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
 p_H2 = eig(Alin-Blin*K_H2_X);
 
-return 
 
 %% 3. TEST THE LINEARIZED CONTROL-LAW
 
