@@ -39,7 +39,7 @@ x_bar = [x1_bar x2_bar x3_bar x4_bar]';
 dx_0 = [0;1;0;1]*0.01;           %integral initialization
 
 % computation of the equilibrium position with MatLab
-
+% 
 % syms x1(t) x2(t) x3(t) x4(t) u(t) y(t) % variables
 % syms  Bm Jl Jm m g l k %system parameters, comment if you want the numerical expression
 % 
@@ -71,7 +71,7 @@ Alin= [ 0           -k/Jl + m*g*l*sin(x2_bar)/Jl             0           k/Jl;
 
 Blin = [0; 0; 1/Jm; 0];
 
-Clin= [0    1   0   0];             % the output is y(t) = x2(t) = θl(t) 
+Clin= [0    1   0   0];            
 
 Dlin = zeros(1);
 
@@ -122,7 +122,8 @@ p_pole_placement_ext = eig(A_ext-B_ext*K_ext); % poles of the extended closed lo
 Q = 0.01*eye(4);
 R = 1*diag(1);
 
-[K_lq, S, P] = lqr(Alin ,Blin, Q, R);
+P_lq = are(Alin, Blin*R^(-1)*Blin', Q) ;
+K_lq = R^(-1)*Blin'*P_lq;
 
 p_LQ = eig(Alin-Blin*K_lq);
 
@@ -144,13 +145,13 @@ rank(ctrb(A_tilde, B_tilde));
 C_q = sqrt(Q_lq) ;
 rank(obsv(A_tilde, C_q));
 
-P_lq = are(A_tilde, B_tilde*R_lq*B_tilde', Q_lq) ;
-k = R_lq^(-1)*B_tilde'*P_lq;
+P_lq_ext = are(A_tilde, B_tilde*R_lq^(-1)*B_tilde', Q_lq) ;
+K_lq_ext = R_lq^(-1)*B_tilde'*P_lq_ext;
 
-k_lqx = k(:, 1:4) ;
-k_lqeta = k(:,5) ;
+K_lqx = K_lq_ext(:,1:4) ;
+K_lqeta = K_lq_ext(:,5) ;
 
-p_LQ_ext = eig(Alin-Blin*k_lqx); 
+p_LQ_ext = eig(Alin-Blin*K_lqx);
 
 % 2.3.5 H2-CONTROL with the system enlargment
 
@@ -159,7 +160,7 @@ p = 1 ;             %n of inputs
 m = 1 ;             %number of outpuRts
 
 q =       1;        %0.01
-r =       1/100;        %10
+r =       1/0.008;        %10
 qt =      0; 
 rt =      0;
 
@@ -183,13 +184,12 @@ BB = [B1 B2] ;
 CC = [C1 ; C2] ;
 DD = [D11 D12 ; D21 D22] ;
 
-P_H2 = are(A, B2*D12'*D12*B2', C1'*C1);
-K_H2 = (D12'*D12)*B2'*P_H2;
+P_H2 = are(A, B2*(D12'*D12)^(-1)*B2', C1'*C1);
+K_H2 = (D12'*D12)^(-1)*B2'*P_H2;
 
 K_H2_X = K_H2(:,1:4) ;
 K_H2_V = K_H2(:, 5) ;
 p_H2 = eig(Alin-Blin*K_H2_X);
-
 
 %% 3. TEST THE LINEARIZED CONTROL-LAW
 
