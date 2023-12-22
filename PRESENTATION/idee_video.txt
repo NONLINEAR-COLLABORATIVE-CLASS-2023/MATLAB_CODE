@@ -1,3 +1,0 @@
-COME FAREI IL VIDEO
-
-Secondo me per fare un lavoro fatto bene, considerando che i punti sono circa 8 (considerando che il 7 ne ha 2/3), bisognerebbe fare 2 punti a testa. In particolare, dividendoceli possiamo evitare di dover registrare tutto one take. Infatti, la mia idea è quella di separare con una copertina ogni punto all'interno del video, in modo che si registri un punto alla volta. Poi come abbiamo detto, l'idea è quello di fare una chiamata su teams e registrare le parti. Secondo me potrebbe essere meglio che ognuno registri il proprio audio dove spiega tutto e sotto, chi monterà il video, mette la corrispondente parte di codice o schema simulink ecc... Secondo me bisogna scegliere anche se far vedere i calcoli parametrici fatti a mano oppure quelli su MATLAB
