@@ -320,7 +320,7 @@ p_tilde = -50 + [-0, -1, -2, -3]; % poles choosen for pole placement
 Kv_tilde = place(A_tilde, B_tilde, p_tilde);
 p_tilde_pole_placement = eig(A_tilde-B_tilde*Kv_tilde);
 
-% 4.3.2 PID over the pole placement Kv_tilde
+% 4.3.2 PI over the pole placement Kv_tilde
 s = tf('s');
 G_v =C_tilde*(s*eye(4)-(A_tilde-B_tilde*Kv_tilde))^-1*B_tilde;
 wc = 3; % rad/s
