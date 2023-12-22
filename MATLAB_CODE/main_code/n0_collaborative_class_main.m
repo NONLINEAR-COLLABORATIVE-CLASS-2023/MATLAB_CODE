@@ -159,8 +159,8 @@ n = 5 ;             %n of states
 p = 1 ;             %n of inputs
 m = 1 ;             %number of outpuRts
 
-q =       1;        %0.01
-r =       1/0.008;        %10
+q =       1;     
+r =       1/0.008;        
 qt =      0; 
 rt =      0;
 
